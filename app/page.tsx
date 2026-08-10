@@ -100,28 +100,25 @@ export default function Home() {
     setSubmitStatus({ type: null, message: '' });
 
     const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get('name'),
-      phone: formData.get('phone'),
-      email: formData.get('email'),
-      address: formData.get('address'),
-      message: formData.get('message'),
-    };
+    
+    // Add Web3Forms access key
+    formData.append("access_key", "4cce9ebe-d005-4e20-9a4c-083b7e57d085");
+    formData.append("subject", `New Enquiry from ${formData.get('name')} — Uday Car Shopkeeper`);
+    formData.append("from_name", "Uday Car Shopkeeper Website");
     
     try {
-      const response = await fetch('/api/send-email', {
+      const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: formData,
       });
 
       const result = await response.json();
 
-      if (response.ok) {
+      if (response.ok && result.success) {
         setSubmitStatus({ type: 'success', message: 'Email sent successfully!' });
         (e.target as HTMLFormElement).reset();
       } else {
-        setSubmitStatus({ type: 'error', message: result.error || 'Failed to send email.' });
+        setSubmitStatus({ type: 'error', message: result.message || 'Failed to send email.' });
       }
     } catch (error) {
       setSubmitStatus({ type: 'error', message: 'An unexpected error occurred.' });
