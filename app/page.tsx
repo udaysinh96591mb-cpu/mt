@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'motion/react';
-import { MessageCircle, ShoppingCart, ShieldCheck, Clock, MessageSquare, Users, Phone, Mail, Menu, X } from 'lucide-react';
+import { MessageCircle, ShoppingCart, ShieldCheck, Clock, MessageSquare, Users, Phone, Mail, Menu, X, Package } from 'lucide-react';
+import OrderModal from '@/components/OrderModal';
+import TrackOrderModal from '@/components/TrackOrderModal';
+import Toast from '@/components/Toast';
 
 const PHONE = "919106377300";
 const EMAIL = "udaysinh96591.mb@gmail.com";
@@ -21,42 +24,42 @@ const products = [
     price: 2499,
     tag: "Interior",
     desc: "Water-resistant 5-seat cover set, custom-fit for most hatchbacks & sedans.",
-    img: "https://placehold.co/500x400/161f29/ff6a1a/png?text=Seat+Cover"
+    img: "/images/seat_cover_1786353374991.jpg"
   },
   {
     name: "LED Headlight Upgrade Kit",
     price: 3999,
     tag: "Lighting",
     desc: "Plug-and-play 6000K LED kit — brighter beam, lower power draw.",
-    img: "https://placehold.co/500x400/161f29/26c6ff/png?text=LED+Headlight"
+    img: "/images/led_headlight_1786353391761.jpg"
   },
   {
     name: "Car Perfume Diffuser",
     price: 499,
     tag: "Accessory",
     desc: "Refillable dashboard diffuser, long-lasting fragrance, 3 scent options.",
-    img: "https://placehold.co/500x400/161f29/ff6a1a/png?text=Perfume"
+    img: "/images/car_perfume_1786353404098.jpg"
   },
   {
     name: "Alloy Wheel Cover Set (4 pcs)",
     price: 1799,
     tag: "Exterior",
     desc: "Scratch-resistant ABS covers that snap onto most 14–15 inch rims.",
-    img: "https://placehold.co/500x400/161f29/26c6ff/png?text=Wheel+Cover"
+    img: "/images/wheel_cover_1786353415762.jpg"
   },
   {
     name: "Dash Cam Pro 1080p",
     price: 4499,
     tag: "Electronics",
     desc: "Loop recording, night vision and impact detection in one compact unit.",
-    img: "https://placehold.co/500x400/161f29/ff6a1a/png?text=Dash+Cam"
+    img: "/images/dash_cam_1786353427164.jpg"
   },
   {
     name: "Microfiber Car Body Cover",
     price: 1299,
     tag: "Protection",
     desc: "Dustproof, UV-resistant cover with elastic hem for a snug fit.",
-    img: "https://placehold.co/500x400/161f29/26c6ff/png?text=Car+Cover"
+    img: "/images/car_cover_1786353440708.jpg"
   }
 ];
 
@@ -82,6 +85,11 @@ const Reveal = ({ children, className = "" }: { children: React.ReactNode, class
 export default function Home() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [trackModalOpen, setTrackModalOpen] = useState(false);
+  const [trackOrderId, setTrackOrderId] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<typeof products[0] | null>(null);
+  const [pastOrders, setPastOrders] = useState<any[]>([]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -91,8 +99,26 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const loadOrders = () => {
+      try {
+        const saved = localStorage.getItem('uc_orders');
+        if (saved) {
+          setPastOrders(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error("Failed to load orders", e);
+      }
+    };
+    
+    loadOrders();
+    window.addEventListener('orderHistoryUpdated', loadOrders);
+    return () => window.removeEventListener('orderHistoryUpdated', loadOrders);
+  }, []);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' });
+  const [enquiryMessage, setEnquiryMessage] = useState("");
 
   const handleEnquiry = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -164,6 +190,13 @@ export default function Home() {
           </nav>
 
           <div className="flex items-center gap-4">
+            <button 
+              onClick={() => { setTrackOrderId(''); setTrackModalOpen(true); }}
+              className="hidden md:flex items-center gap-2 text-[0.84rem] font-medium text-[#93a1ae] hover:text-[#ff6a1a] transition-colors"
+            >
+              <Package className="w-4 h-4" />
+              Track Order
+            </button>
             <a href={waLink(defaultMsg)} target="_blank" rel="noopener noreferrer" className="hidden md:flex items-center gap-2.5 bg-[#1c2733] border border-[#26333f] text-[#f4f7fa] px-4 py-2 rounded-full text-[0.84rem] font-semibold transition-all duration-250 hover:border-[#2fbf71] hover:bg-[#152018] hover:-translate-y-[1px]">
               <MessageCircle className="w-4 h-4 text-[#2fbf71]" />
               <span>WhatsApp Us</span>
@@ -182,6 +215,13 @@ export default function Home() {
                 {item}
               </a>
             ))}
+            <button 
+              onClick={() => { setTrackOrderId(''); setTrackModalOpen(true); setIsNavOpen(false); }}
+              className="flex items-center gap-2.5 bg-transparent border border-[#26333f] text-[#f4f7fa] px-4 py-3 rounded-full text-[0.84rem] font-semibold mt-2 justify-center"
+            >
+              <Package className="w-4 h-4 text-[#ff6a1a]" />
+              Track Order
+            </button>
             <a href={waLink(defaultMsg)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 bg-[#1c2733] border border-[#26333f] text-[#f4f7fa] px-4 py-3 rounded-full text-[0.84rem] font-semibold mt-2 justify-center">
               <MessageCircle className="w-4 h-4 text-[#2fbf71]" />
               WhatsApp Us
@@ -238,6 +278,46 @@ export default function Home() {
       
       <div className="relative h-[64px] bg-[#0f151c] mt-[-1px] [clip-path:polygon(0_100%,100%_0,100%_100%,0%_100%)]" />
 
+      {/* ================= ORDER HISTORY ================= */}
+      {pastOrders.length > 0 && (
+        <section className="py-12 bg-[#0b0f14] border-b border-[#26333f]">
+          <div className="max-w-[1180px] mx-auto px-6 w-full">
+            <Reveal>
+              <Eyebrow>Your Account</Eyebrow>
+              <h2 className="font-rajdhani font-bold text-2xl md:text-3xl mb-6 uppercase tracking-[0.02em]">Recent Orders</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pastOrders.slice(0, 3).map((order: any, idx: number) => (
+                  <div key={idx} className="bg-[#161f29] border border-[#26333f] rounded-xl p-5 flex flex-col">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <span className="text-xs text-[#93a1ae] uppercase tracking-widest">{order.date}</span>
+                        <h4 className="text-[#f4f7fa] font-bold text-lg leading-tight mt-1">{order.productName}</h4>
+                      </div>
+                      <div className="bg-[#ff6a1a]/10 p-2 rounded-lg">
+                        <Package className="w-5 h-5 text-[#ff6a1a]" />
+                      </div>
+                    </div>
+                    <div className="text-sm text-[#93a1ae] mb-4">
+                      Order ID: <span className="text-[#f4f7fa]">{order.id}</span><br />
+                      Quantity: <span className="text-[#f4f7fa]">{order.quantity}</span>
+                    </div>
+                    <div className="mt-auto pt-4 border-t border-[#26333f] flex items-center justify-between">
+                      <span className="font-rajdhani font-bold text-lg text-[#2fbf71]">₹{order.total.toLocaleString('en-IN')}</span>
+                      <button 
+                        onClick={() => { setTrackOrderId(order.id); setTrackModalOpen(true); }}
+                        className="text-xs font-semibold uppercase tracking-wider text-[#ff6a1a] hover:text-[#ff803b]"
+                      >
+                        Track Status
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+        </section>
+      )}
+
       {/* ================= PRODUCTS ================= */}
       <section id="products" className="py-[76px] md:py-[110px] bg-[#0f151c] relative">
         <div className="max-w-[1180px] mx-auto px-6 w-full">
@@ -265,10 +345,16 @@ export default function Home() {
                         <small className="text-[#93a1ae] font-medium text-[0.7rem] uppercase tracking-[0.06em] ml-1.5">MRP</small>
                       </span>
                     </div>
-                    <a href={waLink(`Hi ${SHOP_NAME}, I'd like to order:\n\n${p.name} — ₹${p.price.toLocaleString('en-IN')}\n\nPlease confirm availability.`)} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-[10px] bg-[#1c2733] border border-[#26333f] text-[#f4f7fa] font-semibold text-[0.9rem] transition-all duration-250 hover:bg-[#132018] hover:border-[#2fbf71] hover:-translate-y-0.5">
-                      <ShoppingCart className="w-[18px] h-[18px] text-[#2fbf71]" />
-                      Order on WhatsApp
-                    </a>
+                    <button 
+                      onClick={() => { 
+                        setEnquiryMessage(`I would like to order:\nProduct: ${p.name}\nPrice: ₹${p.price.toLocaleString('en-IN')}`);
+                        document.getElementById('enquiryForm')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-[10px] bg-[#1c2733] border border-[#26333f] text-[#f4f7fa] font-semibold text-[0.9rem] transition-all duration-250 hover:bg-[#ff6a1a] hover:border-[#ff6a1a] hover:text-[#0b0f14] hover:-translate-y-0.5"
+                    >
+                      <ShoppingCart className="w-[18px] h-[18px]" />
+                      Quick Order
+                    </button>
                   </div>
                 </div>
               </Reveal>
@@ -284,7 +370,7 @@ export default function Home() {
             <Eyebrow>About The Shop</Eyebrow>
             <h2 className="font-rajdhani font-bold text-[clamp(1.9rem,3.4vw,2.6rem)] mb-5 uppercase tracking-[0.02em] leading-[1.1]">Run By Uday. Trusted By The Neighbourhood.</h2>
             <p className="text-[#93a1ae] mb-[18px] text-[1.02rem]">
-              Uday Car Shopkeeper started as a small counter stocking genuine spares for the local garages nearby — today it's the first call people make before they touch their car.
+              Uday Car Shopkeeper started as a small counter stocking genuine spares for the local garages nearby &mdash; today it&apos;s the first call people make before they touch their car.
             </p>
             <p className="text-[#93a1ae] mb-[18px] text-[1.02rem]">
               No middlemen, no guesswork on fitment, and no waiting on hold. Message the part you need, get a straight price, and pick it up or have it delivered.
@@ -403,7 +489,7 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="fMsg" className="text-[0.76rem] uppercase tracking-[0.08em] text-[#93a1ae]">What do you need?</label>
-                <textarea id="fMsg" name="message" placeholder="Tell us the part, model, or question..." required className="bg-[#0f151c] border border-[#26333f] rounded-[10px] p-[13px_14px] text-[#f4f7fa] font-sans text-[0.92rem] transition-colors focus:outline-none focus:border-[#ff6a1a] resize-y min-h-[100px]"></textarea>
+                <textarea id="fMsg" name="message" value={enquiryMessage} onChange={(e) => setEnquiryMessage(e.target.value)} placeholder="Tell us the part, model, or question..." required className="bg-[#0f151c] border border-[#26333f] rounded-[10px] p-[13px_14px] text-[#f4f7fa] font-sans text-[0.92rem] transition-colors focus:outline-none focus:border-[#ff6a1a] resize-y min-h-[100px]"></textarea>
               </div>
               
               <div className="flex flex-wrap gap-3 mt-1.5 items-center">
@@ -419,7 +505,7 @@ export default function Home() {
                   {submitStatus.message}
                 </div>
               )}
-              <p className="text-[0.78rem] text-[#93a1ae]">This form sends a direct email to our shop. We'll get back to you shortly.</p>
+              <p className="text-[0.78rem] text-[#93a1ae]">This form sends a direct email to our shop. We&apos;ll get back to you shortly.</p>
             </form>
           </Reveal>
         </div>
@@ -437,7 +523,7 @@ export default function Home() {
                   <span className="font-mono text-[0.62rem] text-[#93a1ae] tracking-[0.14em] uppercase">Genuine Auto Parts & Accessories</span>
                 </div>
               </a>
-              <p className="text-[#93a1ae] text-[0.88rem] max-w-[280px]">Fresh finds, fair prices, and a shopkeeper who answers on WhatsApp — that's the whole promise.</p>
+              <p className="text-[#93a1ae] text-[0.88rem] max-w-[280px]">Fresh finds, fair prices, and a shopkeeper who answers on WhatsApp &mdash; that&apos;s the whole promise.</p>
             </div>
             <div>
               <h5 className="font-rajdhani font-bold text-[0.8rem] tracking-[0.1em] uppercase text-[#93a1ae] mb-4">Explore</h5>
@@ -469,6 +555,19 @@ export default function Home() {
       <a href={waLink(defaultMsg)} target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" className="fixed bottom-6 right-6 z-50 w-[60px] h-[60px] rounded-full bg-[#2fbf71] flex items-center justify-center shadow-[0_10px_30px_-6px_rgba(47,191,113,0.6)] animate-[pulseWa_2.4s_ease-in-out_infinite]">
         <MessageCircle className="w-[30px] h-[30px] text-[#0b0f14]" />
       </a>
+      
+      <OrderModal 
+        isOpen={orderModalOpen} 
+        onClose={() => setOrderModalOpen(false)} 
+        product={selectedProduct} 
+      />
+      
+      <TrackOrderModal
+        isOpen={trackModalOpen}
+        onClose={() => setTrackModalOpen(false)}
+        initialOrderId={trackOrderId}
+      />
+      <Toast />
     </>
   );
 }
