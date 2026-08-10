@@ -91,22 +91,42 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleEnquiry = (e: React.FormEvent<HTMLFormElement>) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' });
+
+  const handleEnquiry = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus({ type: null, message: '' });
+
     const formData = new FormData(e.currentTarget);
-    const name = formData.get('name');
-    const phone = formData.get('phone');
-    const email = formData.get('email');
-    const address = formData.get('address');
-    const msg = formData.get('message');
+    const data = {
+      name: formData.get('name'),
+      phone: formData.get('phone'),
+      email: formData.get('email'),
+      address: formData.get('address'),
+      message: formData.get('message'),
+    };
     
-    const subject = encodeURIComponent(`Enquiry from ${name} — ${SHOP_NAME} Website`);
-    const body = encodeURIComponent(`Name: ${name}\nPhone: ${phone}\nEmail: ${email}\nDelivery Address: ${address}\n\nMessage:\n${msg}`);
-    
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${EMAIL}&su=${subject}&body=${body}`;
-    const win = window.open(gmailUrl, '_blank');
-    if (!win) {
-      window.location.href = `mailto:${EMAIL}?subject=${subject}&body=${body}`;
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus({ type: 'success', message: 'Email sent successfully!' });
+        (e.target as HTMLFormElement).reset();
+      } else {
+        setSubmitStatus({ type: 'error', message: result.error || 'Failed to send email.' });
+      }
+    } catch (error) {
+      setSubmitStatus({ type: 'error', message: 'An unexpected error occurred.' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -389,15 +409,20 @@ export default function Home() {
                 <textarea id="fMsg" name="message" placeholder="Tell us the part, model, or question..." required className="bg-[#0f151c] border border-[#26333f] rounded-[10px] p-[13px_14px] text-[#f4f7fa] font-sans text-[0.92rem] transition-colors focus:outline-none focus:border-[#ff6a1a] resize-y min-h-[100px]"></textarea>
               </div>
               
-              <div className="flex flex-wrap gap-3 mt-1.5">
-                <button type="submit" className="inline-flex items-center gap-2.5 px-[22px] py-[13px] rounded-full font-rajdhani font-bold text-[0.88rem] tracking-[0.04em] uppercase bg-[#ff6a1a] text-[#0b0f14] shadow-[0_14px_30px_-10px_rgba(255,106,26,0.25)] transition-all duration-250 hover:-translate-y-[2px] hover:shadow-[0_20px_40px_-12px_rgba(255,106,26,0.55)]">
-                  Send via Gmail
+              <div className="flex flex-wrap gap-3 mt-1.5 items-center">
+                <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2.5 px-[22px] py-[13px] rounded-full font-rajdhani font-bold text-[0.88rem] tracking-[0.04em] uppercase bg-[#ff6a1a] text-[#0b0f14] shadow-[0_14px_30px_-10px_rgba(255,106,26,0.25)] transition-all duration-250 hover:-translate-y-[2px] hover:shadow-[0_20px_40px_-12px_rgba(255,106,26,0.55)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+                  {isSubmitting ? 'Sending...' : 'Send via Email'}
                 </button>
                 <button type="button" onClick={handleWaEnquiry} className="inline-flex items-center gap-2.5 px-[22px] py-[13px] rounded-full font-rajdhani font-bold text-[0.88rem] tracking-[0.04em] uppercase bg-transparent text-[#f4f7fa] border-[1.5px] border-white/35 transition-all duration-250 hover:border-white hover:-translate-y-[2px] hover:bg-white/5">
                   Send on WhatsApp Instead
                 </button>
               </div>
-              <p className="text-[0.78rem] text-[#93a1ae]">This form opens your email or WhatsApp app directly — nothing is stored on a server.</p>
+              {submitStatus.message && (
+                <div className={`text-[0.88rem] font-medium p-3 rounded-lg ${submitStatus.type === 'success' ? 'bg-[#2fbf71]/10 text-[#2fbf71] border border-[#2fbf71]/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                  {submitStatus.message}
+                </div>
+              )}
+              <p className="text-[0.78rem] text-[#93a1ae]">This form sends a direct email to our shop. We'll get back to you shortly.</p>
             </form>
           </Reveal>
         </div>
