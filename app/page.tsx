@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'motion/react';
-import { MessageCircle, ShoppingCart, ShieldCheck, Clock, MessageSquare, Users, Phone, Mail, Menu, X, Package } from 'lucide-react';
+import { MessageCircle, ShoppingCart, ShieldCheck, Clock, MessageSquare, Users, Phone, Mail, Menu, X, Package, Search } from 'lucide-react';
 import OrderModal from '@/components/OrderModal';
 import TrackOrderModal from '@/components/TrackOrderModal';
 import Toast from '@/components/Toast';
@@ -20,46 +20,53 @@ const defaultMsg = `Hi ${SHOP_NAME}, I'd like to know more about your products.`
 
 const products = [
   {
+    name: "10 Amp Blade Fuse",
+    price: 10,
+    tag: "Electrical",
+    desc: "Standard 10A blade fuse for automotive electrical systems.",
+    img: "https://picsum.photos/seed/fuse/400/300"
+  },
+  {
     name: "Premium Fabric Seat Cover Set",
     price: 2499,
     tag: "Interior",
     desc: "Water-resistant 5-seat cover set, custom-fit for most hatchbacks & sedans.",
-    img: "/images/seat_cover_1786353374991.jpg"
+    img: "/images/seat_cover_1786441481598.jpg"
   },
   {
     name: "LED Headlight Upgrade Kit",
     price: 3999,
     tag: "Lighting",
     desc: "Plug-and-play 6000K LED kit — brighter beam, lower power draw.",
-    img: "/images/led_headlight_1786353391761.jpg"
+    img: "/images/led_headlight_1786441501295.jpg"
   },
   {
     name: "Car Perfume Diffuser",
     price: 499,
     tag: "Accessory",
     desc: "Refillable dashboard diffuser, long-lasting fragrance, 3 scent options.",
-    img: "/images/car_perfume_1786353404098.jpg"
+    img: "/images/car_perfume_1786441516522.jpg"
   },
   {
     name: "Alloy Wheel Cover Set (4 pcs)",
     price: 1799,
     tag: "Exterior",
     desc: "Scratch-resistant ABS covers that snap onto most 14–15 inch rims.",
-    img: "/images/wheel_cover_1786353415762.jpg"
+    img: "/images/wheel_cover_1786441532860.jpg"
   },
   {
     name: "Dash Cam Pro 1080p",
     price: 4499,
     tag: "Electronics",
     desc: "Loop recording, night vision and impact detection in one compact unit.",
-    img: "/images/dash_cam_1786353427164.jpg"
+    img: "/images/dash_cam_1786441547291.jpg"
   },
   {
     name: "Microfiber Car Body Cover",
     price: 1299,
     tag: "Protection",
     desc: "Dustproof, UV-resistant cover with elastic hem for a snug fit.",
-    img: "/images/car_cover_1786353440708.jpg"
+    img: "/images/car_body_cover_1786441564589.jpg"
   }
 ];
 
@@ -85,6 +92,7 @@ const Reveal = ({ children, className = "" }: { children: React.ReactNode, class
 export default function Home() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [trackModalOpen, setTrackModalOpen] = useState(false);
   const [trackOrderId, setTrackOrderId] = useState('');
@@ -113,7 +121,11 @@ export default function Home() {
     
     loadOrders();
     window.addEventListener('orderHistoryUpdated', loadOrders);
-    return () => window.removeEventListener('orderHistoryUpdated', loadOrders);
+    window.addEventListener('storage', loadOrders);
+    return () => {
+      window.removeEventListener('orderHistoryUpdated', loadOrders);
+      window.removeEventListener('storage', loadOrders);
+    };
   }, []);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -290,7 +302,16 @@ export default function Home() {
                   <div key={idx} className="bg-[#161f29] border border-[#26333f] rounded-xl p-5 flex flex-col">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <span className="text-xs text-[#93a1ae] uppercase tracking-widest">{order.date}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-[#93a1ae] uppercase tracking-widest">{order.date}</span>
+                          <span className={`text-[0.65rem] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                            order.status === 'Shipped' ? 'bg-[#2fbf71]/20 text-[#2fbf71]' :
+                            order.status === 'Packed' ? 'bg-[#3b82f6]/20 text-[#3b82f6]' :
+                            'bg-[#ff6a1a]/20 text-[#ff6a1a]'
+                          }`}>
+                            {order.status || 'Pending'}
+                          </span>
+                        </div>
                         <h4 className="text-[#f4f7fa] font-bold text-lg leading-tight mt-1">{order.productName}</h4>
                       </div>
                       <div className="bg-[#ff6a1a]/10 p-2 rounded-lg">
@@ -321,14 +342,29 @@ export default function Home() {
       {/* ================= PRODUCTS ================= */}
       <section id="products" className="py-[76px] md:py-[110px] bg-[#0f151c] relative">
         <div className="max-w-[1180px] mx-auto px-6 w-full">
-          <Reveal className="max-w-[640px] mb-[56px]">
-            <Eyebrow>Catalog</Eyebrow>
-            <h2 className="font-rajdhani font-bold text-[clamp(1.9rem,3.4vw,2.6rem)] mb-4 uppercase tracking-[0.02em] leading-[1.1]">Pick a Part, Order in Seconds</h2>
-            <p className="text-[#93a1ae] text-[1.02rem]">Every card sends your order straight to WhatsApp with the product and price already filled in — just hit send.</p>
-          </Reveal>
+          <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-end mb-[56px]">
+            <Reveal className="max-w-[640px]">
+              <Eyebrow>Catalog</Eyebrow>
+              <h2 className="font-rajdhani font-bold text-[clamp(1.9rem,3.4vw,2.6rem)] mb-4 uppercase tracking-[0.02em] leading-[1.1]">Pick a Part, Order in Seconds</h2>
+              <p className="text-[#93a1ae] text-[1.02rem]">Every card sends your order straight to WhatsApp with the product and price already filled in — just hit send.</p>
+            </Reveal>
+            
+            <Reveal className="w-full md:w-auto">
+              <div className="relative w-full md:w-[320px]">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#93a1ae]" />
+                <input 
+                  type="text" 
+                  placeholder="Search by name or category..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#161f29] border border-[#26333f] rounded-full py-3.5 pl-12 pr-6 text-[#f4f7fa] placeholder:text-[#425263] focus:outline-none focus:border-[#ff6a1a] focus:ring-1 focus:ring-[#ff6a1a]/50 transition-all duration-300"
+                />
+              </div>
+            </Reveal>
+          </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[26px]">
-            {products.map((p, i) => (
+            {products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.tag.toLowerCase().includes(searchQuery.toLowerCase())).map((p, i) => (
               <Reveal key={i}>
                 <div className="group relative bg-[#161f29] border border-[#26333f] rounded-2xl overflow-hidden transition-all duration-350 hover:-translate-y-2 hover:border-[#3a4956] hover:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)] isolate flex flex-col h-full">
                   <div className="relative h-[190px] overflow-hidden bg-[#0e141b]">
@@ -347,8 +383,8 @@ export default function Home() {
                     </div>
                     <button 
                       onClick={() => { 
-                        setEnquiryMessage(`I would like to order:\nProduct: ${p.name}\nPrice: ₹${p.price.toLocaleString('en-IN')}`);
-                        document.getElementById('enquiryForm')?.scrollIntoView({ behavior: 'smooth' });
+                        setSelectedProduct(p);
+                        setOrderModalOpen(true);
                       }}
                       className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-[10px] bg-[#1c2733] border border-[#26333f] text-[#f4f7fa] font-semibold text-[0.9rem] transition-all duration-250 hover:bg-[#ff6a1a] hover:border-[#ff6a1a] hover:text-[#0b0f14] hover:-translate-y-0.5"
                     >

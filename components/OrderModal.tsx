@@ -18,7 +18,8 @@ export default function OrderModal({ isOpen, onClose, product }: any) {
         productName: product.name,
         quantity,
         total,
-        date
+        date,
+        status: 'Pending'
       };
       localStorage.setItem('uc_orders', JSON.stringify([newOrder, ...existing]));
       
@@ -40,15 +41,16 @@ export default function OrderModal({ isOpen, onClose, product }: any) {
     const name = formData.get('name') as string;
     const phone = formData.get('phone') as string;
     const address = formData.get('address') as string;
+    const payment = formData.get('payment') as string;
     
-    if (!name || !phone || !address) {
+    if (!name || !phone || !address || !payment) {
       setStatus({ type: 'error', message: 'Please fill out all required fields first.' });
       return;
     }
 
     const orderId = `ORD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     const date = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
-    const waMsg = `🚨 *New Order on Uday Lcar* 🚨\n\n*Order ID:* ${orderId}\n*Product:* ${product.name} (x${quantity})\n*Total Amount:* Rs. ${total}\n\n*Customer Info:*\nName: ${name}\nPhone: ${phone}\nAddress: ${address}\nNote: ${formData.get('message') || 'None'}`;
+    const waMsg = `🚨 *New Order on Uday Lcar* 🚨\n\n*Order ID:* ${orderId}\n*Product:* ${product.name} (x${quantity})\n*Total Amount:* Rs. ${total}\n*Payment Method:* ${payment}\n\n*Customer Info:*\nName: ${name}\nPhone: ${phone}\nAddress: ${address}\nNote: ${formData.get('message') || 'None'}`;
     const waLink = `https://wa.me/919106377300?text=${encodeURIComponent(waMsg)}`;
     
     saveOrder(orderId, date);
@@ -64,9 +66,62 @@ export default function OrderModal({ isOpen, onClose, product }: any) {
     setStatus({ type: null, message: '' });
 
     const formData = new FormData(e.currentTarget);
+    const paymentMethod = formData.get('payment') as string;
     const orderId = `ORD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     const date = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
-    
+
+    if (paymentMethod === 'UPI') {
+      try {
+        // Mocking Razorpay online payment flow since actual keys might not be present
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        
+        script.onload = () => {
+          const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mock_key123', 
+            amount: total * 100,
+            currency: "INR",
+            name: "Uday Lcar",
+            description: `Payment for ${product.name}`,
+            order_id: "", 
+            handler: async function (response: any) {
+              // Payment successful, submit to Web3Forms
+              await submitToWeb3Forms(formData, orderId, date);
+            },
+            prefill: {
+              name: formData.get('name') as string,
+              email: formData.get('email') as string,
+              contact: formData.get('phone') as string,
+            },
+            theme: { color: "#ff6a1a" }
+          };
+          
+          const rzp = new (window as any).Razorpay(options);
+          rzp.on('payment.failed', function (response: any) {
+            setStatus({ type: 'error', message: 'Payment failed. Please try again.' });
+            setIsSubmitting(false);
+          });
+          rzp.open();
+        };
+        
+        script.onerror = () => {
+          setStatus({ type: 'error', message: 'Failed to load Razorpay SDK.' });
+          setIsSubmitting(false);
+        };
+        
+        document.body.appendChild(script);
+        
+      } catch (err: any) {
+        setStatus({ type: 'error', message: err.message || 'Payment initialization failed.' });
+        setIsSubmitting(false);
+      }
+    } else {
+      // Cash on Delivery
+      await submitToWeb3Forms(formData, orderId, date);
+    }
+  };
+
+  const submitToWeb3Forms = async (formData: FormData, orderId: string, date: string) => {
     formData.append("access_key", "4cce9ebe-d005-4e20-9a4c-083b7e57d085");
     formData.append("subject", `🚨 New Order: ${product.name} - ${orderId}`);
     formData.append("from_name", "Uday Lcar Orders");
@@ -76,6 +131,7 @@ export default function OrderModal({ isOpen, onClose, product }: any) {
     formData.append("Quantity", quantity.toString());
     formData.append("Price per item", `Rs. ${product.price}`);
     formData.append("Total Amount", `Rs. ${total}`);
+    // Payment is automatically added as "payment" from radio input
 
     try {
       const response = await fetch('https://api.web3forms.com/submit', {
@@ -84,7 +140,6 @@ export default function OrderModal({ isOpen, onClose, product }: any) {
       });
 
       const result = await response.json();
-
       if (response.ok && result.success) {
         saveOrder(orderId, date);
         window.dispatchEvent(new CustomEvent('showToast', { detail: { message: 'Order submitted successfully!' } }));
@@ -100,6 +155,7 @@ export default function OrderModal({ isOpen, onClose, product }: any) {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0b0f14]/80 backdrop-blur-sm">
@@ -165,6 +221,20 @@ export default function OrderModal({ isOpen, onClose, product }: any) {
                 <label className="block text-[#93a1ae] text-xs uppercase tracking-wider font-semibold mb-2">Special Request (Optional)</label>
                 <input name="message" type="text" className="w-full bg-[#0b0f14] border border-[#26333f] rounded-lg px-4 py-2.5 text-[#f4f7fa] placeholder:text-[#425263] focus:outline-none focus:border-[#ff6a1a] transition-colors" placeholder="Any specific requirements?" />
               </div>
+
+              <div className="pt-2">
+                <label className="block text-[#93a1ae] text-xs uppercase tracking-wider font-semibold mb-3">Payment Method *</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="radio" name="payment" value="COD" className="accent-[#ff6a1a] w-4 h-4 cursor-pointer" required defaultChecked />
+                    <span className="text-[#f4f7fa] text-sm group-hover:text-[#ff6a1a] transition-colors">Cash on Delivery</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="radio" name="payment" value="UPI" className="accent-[#ff6a1a] w-4 h-4 cursor-pointer" required />
+                    <span className="text-[#f4f7fa] text-sm group-hover:text-[#ff6a1a] transition-colors">UPI / Online</span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             {status.type === 'error' && (
@@ -188,6 +258,13 @@ export default function OrderModal({ isOpen, onClose, product }: any) {
                 className="w-full py-3.5 rounded-xl font-rajdhani font-bold text-[1rem] tracking-[0.04em] uppercase bg-transparent text-[#f4f7fa] border-[1.5px] border-[#26333f] transition-all hover:border-white hover:bg-white/5"
               >
                 Order via WhatsApp Instead
+              </button>
+              <button 
+                type="button" 
+                onClick={onClose}
+                className="w-full py-3.5 rounded-xl font-rajdhani font-bold text-[1rem] tracking-[0.04em] uppercase bg-transparent text-[#93a1ae] hover:text-[#f4f7fa] transition-all"
+              >
+                Back
               </button>
             </div>
           </form>
