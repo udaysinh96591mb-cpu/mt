@@ -20,53 +20,53 @@ const defaultMsg = `Hi ${SHOP_NAME}, I'd like to know more about your products.`
 
 const products = [
   {
-    name: "10 Amp Blade Fuse",
-    price: 10,
+    name: "Ceramic Brake Pads",
+    price: 1499,
+    tag: "Brakes",
+    desc: "High-performance ceramic brake pads for smooth and quiet stopping.",
+    img: "https://picsum.photos/seed/brakepads/400/300"
+  },
+  {
+    name: "Synthetic Motor Oil (5W-30)",
+    price: 2199,
+    tag: "Engine",
+    desc: "Full synthetic motor oil for superior engine protection and longevity.",
+    img: "https://picsum.photos/seed/motoroil/400/300"
+  },
+  {
+    name: "Iridium Spark Plugs (Set of 4)",
+    price: 1899,
+    tag: "Ignition",
+    desc: "Long-lasting iridium spark plugs for better fuel efficiency and performance.",
+    img: "https://picsum.photos/seed/sparkplugs/400/300"
+  },
+  {
+    name: "12V Car Battery",
+    price: 5499,
     tag: "Electrical",
-    desc: "Standard 10A blade fuse for automotive electrical systems.",
-    img: "https://picsum.photos/seed/fuse/400/300"
+    desc: "Reliable 12V automotive battery with high cold-cranking amps.",
+    img: "https://picsum.photos/seed/battery/400/300"
   },
   {
-    name: "Premium Fabric Seat Cover Set",
-    price: 2499,
-    tag: "Interior",
-    desc: "Water-resistant 5-seat cover set, custom-fit for most hatchbacks & sedans.",
-    img: "/images/seat_cover_1786441481598.jpg"
+    name: "High-Flow Air Filter",
+    price: 899,
+    tag: "Engine",
+    desc: "Reusable high-flow air filter for improved horsepower and acceleration.",
+    img: "https://picsum.photos/seed/airfilter/400/300"
   },
   {
-    name: "LED Headlight Upgrade Kit",
-    price: 3999,
-    tag: "Lighting",
-    desc: "Plug-and-play 6000K LED kit — brighter beam, lower power draw.",
-    img: "/images/led_headlight_1786441501295.jpg"
+    name: "Timing Belt Kit",
+    price: 3499,
+    tag: "Engine",
+    desc: "Complete timing belt kit including water pump and tensioners.",
+    img: "https://picsum.photos/seed/timingbelt/400/300"
   },
   {
-    name: "Car Perfume Diffuser",
-    price: 499,
-    tag: "Accessory",
-    desc: "Refillable dashboard diffuser, long-lasting fragrance, 3 scent options.",
-    img: "/images/car_perfume_1786441516522.jpg"
-  },
-  {
-    name: "Alloy Wheel Cover Set (4 pcs)",
-    price: 1799,
-    tag: "Exterior",
-    desc: "Scratch-resistant ABS covers that snap onto most 14–15 inch rims.",
-    img: "/images/wheel_cover_1786441532860.jpg"
-  },
-  {
-    name: "Dash Cam Pro 1080p",
-    price: 4499,
-    tag: "Electronics",
-    desc: "Loop recording, night vision and impact detection in one compact unit.",
-    img: "/images/dash_cam_1786441547291.jpg"
-  },
-  {
-    name: "Microfiber Car Body Cover",
-    price: 1299,
-    tag: "Protection",
-    desc: "Dustproof, UV-resistant cover with elastic hem for a snug fit.",
-    img: "/images/car_body_cover_1786441564589.jpg"
+    name: "Gas Shock Absorbers",
+    price: 4299,
+    tag: "Suspension",
+    desc: "Heavy-duty gas shock absorbers for a smoother ride and better handling.",
+    img: "https://picsum.photos/seed/shocks/400/300"
   }
 ];
 
@@ -199,6 +199,10 @@ export default function Home() {
                 <span className="absolute left-0 bottom-[-2px] w-0 h-[2px] bg-[#ff6a1a] transition-all duration-250 group-hover:w-full"></span>
               </a>
             ))}
+            <a href="/admin" className="text-[0.88rem] font-medium text-[#ff6a1a] hover:text-[#ff803b] relative py-1 transition-colors duration-250 group">
+              Admin
+              <span className="absolute left-0 bottom-[-2px] w-0 h-[2px] bg-[#ff6a1a] transition-all duration-250 group-hover:w-full"></span>
+            </a>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -227,6 +231,9 @@ export default function Home() {
                 {item}
               </a>
             ))}
+            <a href="/admin" className="text-[0.88rem] font-medium text-[#ff6a1a] hover:text-[#ff803b]" onClick={() => setIsNavOpen(false)}>
+              Admin Dashboard
+            </a>
             <button 
               onClick={() => { setTrackOrderId(''); setTrackModalOpen(true); setIsNavOpen(false); }}
               className="flex items-center gap-2.5 bg-transparent border border-[#26333f] text-[#f4f7fa] px-4 py-3 rounded-full text-[0.84rem] font-semibold mt-2 justify-center"
@@ -289,55 +296,6 @@ export default function Home() {
       </section>
       
       <div className="relative h-[64px] bg-[#0f151c] mt-[-1px] [clip-path:polygon(0_100%,100%_0,100%_100%,0%_100%)]" />
-
-      {/* ================= ORDER HISTORY ================= */}
-      {pastOrders.length > 0 && (
-        <section className="py-12 bg-[#0b0f14] border-b border-[#26333f]">
-          <div className="max-w-[1180px] mx-auto px-6 w-full">
-            <Reveal>
-              <Eyebrow>Your Account</Eyebrow>
-              <h2 className="font-rajdhani font-bold text-2xl md:text-3xl mb-6 uppercase tracking-[0.02em]">Recent Orders</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pastOrders.slice(0, 3).map((order: any, idx: number) => (
-                  <div key={idx} className="bg-[#161f29] border border-[#26333f] rounded-xl p-5 flex flex-col">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-[#93a1ae] uppercase tracking-widest">{order.date}</span>
-                          <span className={`text-[0.65rem] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                            order.status === 'Shipped' ? 'bg-[#2fbf71]/20 text-[#2fbf71]' :
-                            order.status === 'Packed' ? 'bg-[#3b82f6]/20 text-[#3b82f6]' :
-                            'bg-[#ff6a1a]/20 text-[#ff6a1a]'
-                          }`}>
-                            {order.status || 'Pending'}
-                          </span>
-                        </div>
-                        <h4 className="text-[#f4f7fa] font-bold text-lg leading-tight mt-1">{order.productName}</h4>
-                      </div>
-                      <div className="bg-[#ff6a1a]/10 p-2 rounded-lg">
-                        <Package className="w-5 h-5 text-[#ff6a1a]" />
-                      </div>
-                    </div>
-                    <div className="text-sm text-[#93a1ae] mb-4">
-                      Order ID: <span className="text-[#f4f7fa]">{order.id}</span><br />
-                      Quantity: <span className="text-[#f4f7fa]">{order.quantity}</span>
-                    </div>
-                    <div className="mt-auto pt-4 border-t border-[#26333f] flex items-center justify-between">
-                      <span className="font-rajdhani font-bold text-lg text-[#2fbf71]">₹{order.total.toLocaleString('en-IN')}</span>
-                      <button 
-                        onClick={() => { setTrackOrderId(order.id); setTrackModalOpen(true); }}
-                        className="text-xs font-semibold uppercase tracking-wider text-[#ff6a1a] hover:text-[#ff803b]"
-                      >
-                        Track Status
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </section>
-      )}
 
       {/* ================= PRODUCTS ================= */}
       <section id="products" className="py-[76px] md:py-[110px] bg-[#0f151c] relative">
